@@ -13,11 +13,7 @@ function LoadView(url){
 
 $(()=>{
 
-     if($.cookie('uname')) {
-          LoadDashBoard();
-     } else {
-          LoadView('./home.html');
-     }
+     LoadView('./home.html');
 
      $(document).on('click', '#home-register-button', ()=>{
           LoadView('./register.html');
@@ -37,10 +33,10 @@ $(()=>{
 
           $.ajax({
                method: 'get',
-               url: 'http://127.0.0.1:4040/users',
+               url: 'http://localhost:4040/users',
                success: (users)=>{
                    for(var user of users){
-                       if(user.userid===$("#txtUserName").val()){
+                       if(user.username===$("#txtUserName").val()){
                             $("#lblUserError").html('User Name Taken - Try Another').css("color","red");
                             break;
                        } else {
@@ -58,49 +54,19 @@ $(()=>{
      $(document).on('click', '#btnRegister',()=>{
 
           var user = {
-               userid: $("#txtUserName").val(),
+               username: $("#txtUserName").val(),
                password: $("#txtPassword").val(),
                email: $("#txtEmail").val()
           };
 
           $.ajax({
                method: 'post',
-               url: 'http://127.0.0.1:4040/register-user',
-               data: user
+               url: 'http://localhost:4040/users',
+               data: JSON.stringify(user)
           });
           alert('Registered Successfully..');
      });
 
-     function LoadDashBoard(){
-          $.ajax({
-               method:'get',
-               url: './dashboard.html',
-               success: (response)=>{
-                    $("section").html(response);
-                    $("#active-user").html($.cookie('uname'));
-                    $.ajax({
-                         method:'get',
-                         url:'http://127.0.0.1:4040/appointments',
-                         success:(appointments=>{
-                              
-                              var results = appointments.filter(appointment=> appointment.userid===$.cookie('uname'));
-
-                              results.map(appointment=>{
-                                    $(`<div class="alert mx-2 alert-success">
-                                        <h3>${appointment.title}</h3>
-                                        <p>${appointment.description}</p>
-                                        <div class="bi bi-calendar"> ${appointment.date} </div>
-                                        <div>
-                                          <button id="btn-edit" value=${appointment.appointment_id} data-bs-target="#edit-appointment" data-bs-toggle="modal" class="bi bi-pen-fill btn btn-warning"></button>
-                                          <button id="btn-delete" value=${appointment.appointment_id} class="bi bi-trash-fill btn btn-danger mx-2"></button>
-                                        </div>
-                                    </div>`).appendTo("#appointment-cards");
-                              })
-                         })
-                    })
-               }
-          })  
-     }
 
      // Login Click
 
@@ -108,14 +74,40 @@ $(()=>{
 
             $.ajax({
                method: 'get',
-               url: 'http://127.0.0.1:4040/users',
+               url: 'http://localhost:4040/users',
                success: (users)=>{
-                    console.log(users);
-                    var user = users.find(item=> item.userid===$("#txtUserName").val());
+                    var user = users.find(item=> item.username===$("#txtUserName").val());
                     if(user){
                          if(user.password===$("#txtPassword").val()){
                               $.cookie('uname', $("#txtUserName").val(),{expires:2});
-                              LoadDashBoard();     
+                              $.ajax({
+                                   method:'get',
+                                   url: './dashboard.html',
+                                   success: (response)=>{
+                                        $("section").html(response);
+                                        $("#active-user").html($.cookie('uname'));
+                                        $.ajax({
+                                             method:'get',
+                                             url:'http://localhost:4040/appointments',
+                                             success:(appointments=>{
+                                                  
+                                                  var results = appointments.filter(appointment=> appointment.username===$.cookie('uname'));
+
+                                                  results.map(appointment=>{
+                                                        $(`<div class="alert alert-success">
+                                                            <h3>${appointment.title}</h3>
+                                                            <p>${appointment.description}</p>
+                                                            <div class="bi bi-calendar"> ${appointment.date} </div>
+                                                            <div>
+                                                              <button class="bi bi-pen-fill btn btn-warning"></button>
+                                                              <button class="bi bi-trash-fill btn btn-danger mx-2"></button>
+                                                            </div>
+                                                        </div>`).appendTo("#appointment-cards");
+                                                  })
+                                             })
+                                        })
+                                   }
+                              })                 
                          } else {
                               alert('Invalid Password');
                          }
@@ -136,83 +128,5 @@ $(()=>{
      })
 
 
-     // Add Appointment Click
-
-     $(document).on('click', '#btn-add', ()=>{
-
-               var appointment = {
-                    appointment_id: parseInt($("#appointment-id").val()),
-                    title: $("#appointment-title").val(),
-                    description: $("#appointment-description").val(),
-                    date: $("#appointment-date").val(),
-                    userid: $.cookie('uname')
-               }
-
-               $.ajax({
-                    method: 'post',
-                    url: 'http://127.0.0.1:4040/add-appointment',
-                    data: appointment,
-               });
-
-               LoadDashBoard();
-
-     })
-
-     // Delete Appointment 
-
-     $(document).on('click', '#btn-delete',(e)=>{
-
-           var flag = confirm('Are you sure?\nWant to Delete?');
-           if(flag===true){
-               $.ajax(
-                    {
-                         method: 'delete',
-                         url: `http://127.0.0.1:4040/delete-appointment/${e.target.value}`
-                    }
-                );
-                LoadDashBoard();
-           }
-          
-     })
-
-
-     // Edit Appointment 
-     $(document).on('click', '#btn-edit',(e)=>{
-
-           $.ajax({
-               method:'get',
-               url: `http://127.0.0.1:4040/appointments/${e.target.value}`,
-               success: (appointment)=>{
-                     console.log(appointment);
-                     $("#edit-appointment-id").val(appointment.appointment_id);
-                     $("#edit-appointment-title").val(appointment.title);
-                     $("#edit-appointment-description").val(appointment.description);
-                     $("#edit-appointment-date").val(appointment.date.substring(0, appointment.date.indexOf('T')));
-               }
-           })
-
-     })
-
-     // Update & Save Appointment 
-     $(document).on('click', '#btn-save',()=>{
-
-          console.log($("#edit-appointment-id").val());
-
-          var appointment = {
-               appointment_id: $("#edit-appointment-id").val(),
-               title: $("#edit-appointment-title").val(),
-               description: $("#edit-appointment-description").val(),
-               date: $("#edit-appointment-date").val(),
-               userid: $.cookie('uname')
-          }
-
-          $.ajax({
-               method: 'put',
-               url: `http://127.0.0.1:4040/edit-appointment/${$("#edit-appointment-id").val()}`,
-               data: appointment
-          });
-          LoadDashBoard();
-
-     })
 
 })

@@ -1,1 +1,32 @@
-{}
+{
+  "users": [
+    {
+      "id": "1",
+      "username": "john_nit",
+      "password": "john@11",
+      "email": "john@gmail.com"
+    },
+    {
+      "id": "d453",
+      "username": "sam_hyd",
+      "password": "sam@11",
+      "email": "samson@outlook.com"
+    }
+  ],
+  "appointments": [
+    {
+      "id": "1",
+      "title": "Meeting",
+      "description": "attend meeting",
+      "date": "2025-04-10",
+      "username": "john_nit"
+    },
+    {
+        "id": "2",
+        "title": "Birthday Party",
+        "description": "Collect gift for party",
+        "date": "2025-04-03",
+        "username": "sam_hyd"
+      }
+  ]
+}
